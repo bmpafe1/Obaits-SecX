@@ -1,0 +1,36 @@
+<decoder name="pgaudit">
+  <prematch>AUDIT: </prematch>
+</decoder>
+
+<decoder name="pgaudit-fields">
+  <!-- REAL, THIRD bug found: the child decoder shared the EXACT SAME
+       NAME ("pgaudit") as its own parent. Every real, working Wazuh
+       example uses a DISTINCT child name (pfsense -> pfsense_router,
+       wazuh -> agent-upgrade, vshell -> vshell-accepted) — confirmed via
+       direct comparison after even a trivial ".+" catch-all test child
+       decoder still matched nothing, at any regex complexity, ruling
+       out the regex pattern itself as the cause. Renamed to a distinct
+       child name to resolve the ambiguity.
+       REAL BUG (first attempt) FIXED: had 3 capturing groups but only 2
+       names in <order> — exact 1:1 mapping required.
+       REAL, SECOND BUG: \S matches commas too in a comma-delimited
+       format — greedy backtracking landed on the wrong field boundary.
+       Fixed with [^,]+ instead. -->
+  <parent>pgaudit</parent>
+  <!-- REAL, FOURTH and actual root cause, found after three other genuine
+       fixes (capture-group count, \S matching commas, distinct child
+       name) all still failed identically: Wazuh's DEFAULT decoder regex
+       engine is OS_Regex, a deliberately restricted custom dialect — NOT
+       standard PCRE — confirmed via Wazuh's own documentation, which
+       explicitly lists real limitations (no alternation groups, limited
+       quantifiers) and never confirms support for negated character
+       classes like [^,] at all. wazuh-analysisd -t only validates XML
+       well-formedness, never regex semantic correctness — a
+       syntactically "valid" but silently non-functional OS_Regex pattern
+       passes every config test while never matching, which is exactly
+       why the first three fixes all appeared correct yet kept failing
+       identically. Fixed by explicitly declaring type="pcre2" for
+       genuine, full PCRE support. -->
+  <regex type="pcre2" offset="after_parent">^[^,]+,\d+,\d+,([^,]+),([^,]*),</regex>
+  <order>audit_class, audit_command</order>
+</decoder>

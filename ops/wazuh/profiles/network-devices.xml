@@ -1,0 +1,22 @@
+<agent_config>
+  <syscheck>
+    <directories>/etc/network-configs</directories>
+    <directories>/opt/fortigate/configs</directories>
+    <frequency>86400</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/remote-devices/syslog.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/fortigate.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/cisco.log</location>
+  </localfile>
+</agent_config>

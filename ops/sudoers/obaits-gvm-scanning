@@ -1,0 +1,16 @@
+# REAL FEATURE, completed 2026-08-24: network vulnerability scanning via
+# GVM/OpenVAS. The gvm-helper talks to gvmd over its unix socket, which is
+# root-owned inside a docker volume, so the helper must run as root.
+#
+# REAL BUG THIS FIXES: GvmClient used to SSH to 127.0.0.1 to run the helper.
+# That hop had never worked -- no private key existed for administrator and
+# 127.0.0.1 was not in known_hosts -- so no scan had ever run on this platform.
+# The client now invokes the helper directly, which needs this grant.
+#
+# Granted to ADMINISTRATOR, not www-data: the queue worker runs as
+# administrator (obaits-queue.service), and RunScan is a queued job. Web
+# requests never invoke this path.
+#
+# Scoped to the one helper script by absolute path. A relative path here would
+# be a privilege-escalation hole.
+administrator ALL=(root) NOPASSWD: /usr/bin/python3 /var/www/obaits/ops/gvm-helper/gvm_run.py *

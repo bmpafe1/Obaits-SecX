@@ -1,0 +1,71 @@
+<agent_config>
+  <syscheck>
+    <directories>/home</directories>
+    <directories>/root</directories>
+    <!-- REAL BUG FIXED 2026-07-27: original used ~/.config,/~/.local,/~/.cache
+         — Wazuh syscheck does NOT expand ~, and the /~/ paths are malformed
+         either way. Corrected to the same /home/*/... wildcard pattern this
+         same file already uses correctly two lines below for .ssh. -->
+    <directories>/home/*/.config,/home/*/.local,/home/*/.cache</directories>
+    <directories>/home/*/.ssh</directories>
+    <directories>/root/.ssh</directories>
+    <directories>/var/spool/cron</directories>
+    <directories>/etc/cron.d,/etc/cron.daily,/etc/cron.hourly</directories>
+    <directories>/etc/xdg/autostart</directories>
+    <directories>/home/*/.config/autostart</directories>
+    <directories>/tmp</directories>
+    <directories>/var/lib/dpkg/status.d</directories>
+    <directories>/var/lib/rpm</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$|\.swp$|\.thumb$|\.trash$</ignore>
+    <ignore>/home/*/.cache</ignore>
+    <ignore>/home/*/.thumbnails</ignore>
+    <ignore>/home/*/.local/share/Trash</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/secure</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/messages</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/Xorg.0.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/gdm3/greeter.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/lightdm/lightdm.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/kern.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/cron.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/sudo.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/audit/audit.log</location>
+  </localfile>
+</agent_config>

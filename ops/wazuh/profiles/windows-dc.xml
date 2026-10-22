@@ -1,0 +1,61 @@
+<agent_config>
+  <syscheck>
+    <directories>C:\Windows\NTDS</directories>
+    <directories>C:\Windows\SYSVOL</directories>
+    <directories>C:\Windows\Debug</directories>
+    <directories>C:\Windows\System32\LogFiles</directories>
+    <directories>C:\Windows\System32\GroupPolicy</directories>
+    <directories>C:\Windows\System32\GroupPolicyUsers</directories>
+    <directories>C:\Windows\System32\config</directories>
+    <directories>C:\Windows\Tasks</directories>
+    <directories>C:\Windows\System32\Tasks</directories>
+    <directories>C:\Windows\System32\CertSrv</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$|\.edb$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Security</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>System</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Application</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Windows PowerShell</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Windows-Sysmon/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Windows-DNS-Client/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Directory Service</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>DFS Replication</location>
+  </localfile>
+  <!-- We strongly recommend enabling these via GPO (Stage 4 territory —
+       audit policy enforcement is a separate mechanism from Wazuh's own
+       config, and cannot be pushed through this file):
+       - Audit Logon Events (Success/Failure)
+       - Audit Account Management (Success/Failure)
+       - Audit Directory Service Access (Success/Failure)
+       - Audit Kerberos Service Ticket Operations (Success/Failure)
+       - Audit Privilege Use (Success/Failure)
+       - Audit Process Tracking (Success)
+       - Audit Policy Change (Success/Failure)
+  -->
+</agent_config>

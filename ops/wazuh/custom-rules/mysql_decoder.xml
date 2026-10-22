@@ -1,0 +1,8 @@
+<decoder name="mysql-audit">
+  <prematch type="pcre2">^\d{8} \d{2}:\d{2}:\d{2},</prematch>
+</decoder>
+<decoder name="mysql-audit-fields">
+  <parent>mysql-audit</parent>
+  <regex type="pcre2" offset="after_parent">^([^,]*),([^,]+),([^,]*),(\d+),(\d+),([A-Z]+),([^,]*),(.*)$</regex>
+  <order>audit_hostname, audit_user, audit_source, audit_connid, audit_queryid, audit_command, audit_db, audit_detail</order>
+</decoder>

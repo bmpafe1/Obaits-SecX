@@ -1,0 +1,31 @@
+<agent_config>
+  <syscheck>
+    <directories>/u01/app/oracle/product</directories>
+    <directories>/u01/app/oracle/oradata</directories>
+    <directories>/u01/app/oracle/fast_recovery_area</directories>
+    <directories>/u01/app/oracle/product/*/dbhome_1/network/admin</directories>
+    <directories>/u01/app/oracle/admin/*/adump</directories>
+    <directories>/u01/app/oracle/diag/rdbms/*/*/trace</directories>
+    <directories>/u01/app/oracle/product/*/dbhome_1/owm</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.trc$|\.aud$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/u01/app/oracle/diag/tnslsnr/*/listener/alert/log.xml</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/u01/app/oracle/diag/rdbms/*/*/trace/alert_*.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/u01/app/oracle/audit/*.xml</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/u01/app/oracle/admin/*/adump/*.aud</location>
+  </localfile>
+</agent_config>

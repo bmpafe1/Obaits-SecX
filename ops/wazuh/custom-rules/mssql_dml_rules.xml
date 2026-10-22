@@ -1,0 +1,35 @@
+<group name="mssql,">
+  <!-- REAL, GENUINE PLATFORM BUG WORKED AROUND: confirmed directly, and
+       via multiple real, independent Wazuh GitHub issues (one closed
+       "not planned" by Wazuh's own team), that custom rules referencing
+       windows_eventchannel-decoded content never fire in live
+       production, no matter the approach; confirmed repeatedly on
+       this real device. These rules instead match against real, clean,
+       top-level JSON fields produced by a real, dedicated poller
+       (deployed via mssql-db.ps1 Phase 4), scoped to that poller's own
+       real log file, avoiding the broken eventchannel path entirely. -->
+  <rule id="100315" level="3">
+    <decoded_as>json</decoded_as>
+    <location>mssql-audit-events.log</location>
+    <description>MSSQL: DML/DDL audit event</description>
+    <group>mssql,</group>
+  </rule>
+  <rule id="100316" level="7">
+    <if_sid>100315</if_sid>
+    <field name="action_id" type="pcre2">^(CR|AL|DR)$</field>
+    <description>MSSQL: schema change ($(action_id)) on $(database_name).$(object_name) by $(server_principal_name)</description>
+    <group>mssql,gdpr_IV_35.7.d,pci_dss_10.2.7,</group>
+  </rule>
+  <rule id="100317" level="5">
+    <if_sid>100315</if_sid>
+    <field name="action_id" type="pcre2">^(IN|UP|DL)$</field>
+    <description>MSSQL: data write ($(action_id)) on $(database_name).$(object_name) by $(server_principal_name) - $(statement)</description>
+    <group>mssql,gdpr_IV_35.7.d,</group>
+  </rule>
+  <rule id="100318" level="3">
+    <if_sid>100315</if_sid>
+    <field name="action_id" type="pcre2">^SL$</field>
+    <description>MSSQL: data read on $(database_name).$(object_name) by $(server_principal_name)</description>
+    <group>mssql,</group>
+  </rule>
+</group>

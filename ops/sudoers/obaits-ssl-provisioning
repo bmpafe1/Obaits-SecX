@@ -1,0 +1,21 @@
+# REAL FEATURE 2026-08-22: automated SSL certificate issuance for
+# tenant-owned domains via Certbot + acme-dns.
+# REAL BUG FOUND during real end-to-end testing: our own portal's
+# registration and Certbot's own acme-dns-auth.py hook script each
+# perform their OWN, INDEPENDENT real acme-dns registration for the
+# same domain -- confirmed directly, two different subdomain/fulldomain
+# values existed for the same real domain, meaning the user's real
+# CNAME (pointing to our portal's own registration) never matched what
+# Certbot's hook was actually checking. Fixed by having our own code
+# write ITS OWN, already-known registration into the hook's own real
+# storage file (/etc/letsencrypt/acmedns.json) before invoking Certbot,
+# so the hook's own real "already registered?" check (storage.fetch)
+# finds and reuses our single, consistent account.
+www-data ALL=(ALL) NOPASSWD: /bin/cat /etc/letsencrypt/acmedns.json
+www-data ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/letsencrypt/acmedns.json
+www-data ALL=(ALL) NOPASSWD: /usr/bin/certbot certonly --manual --manual-auth-hook*
+www-data ALL=(ALL) NOPASSWD: /usr/bin/certbot renew*
+www-data ALL=(ALL) NOPASSWD: /bin/mkdir -p /var/www/obaits/storage/app/ssl-certs/*
+www-data ALL=(ALL) NOPASSWD: /bin/cp /etc/letsencrypt/live/*/fullchain.pem *
+www-data ALL=(ALL) NOPASSWD: /bin/cp /etc/letsencrypt/live/*/privkey.pem *
+www-data ALL=(ALL) NOPASSWD: /bin/chown www-data\:www-data /var/www/obaits/storage/app/ssl-certs/*

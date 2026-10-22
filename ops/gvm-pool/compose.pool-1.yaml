@@ -1,0 +1,229 @@
+# Scanner pool member 1.
+#
+# Joins the SHARED gvm network so central gvmd can reach it over TLS, and is
+# registered with gvmd via create_scanner as a networked OSP scanner.
+#
+# WHY NOT just another ospd-openvas in the main stack: gvmd reaches the built-in
+# scanner over a unix socket, and create_scanner has no socket variant. Every
+# additional scanner must speak OSP over TLS. Confirmed against python-gvm
+# 27.5.0 (GMPv225) on 2026-08-25.
+#
+# ISOLATION: this member joins exactly ONE tenant's Headscale network at a time,
+# for the duration of a scan, and leaves afterwards. Tenant networks all use
+# 100.64.0.0/10 and addresses overlap between them, so a scanner holding several
+# routes at once could reach the wrong customer's device. One membership at a
+# time makes that impossible by construction rather than by configuration.
+#
+# Feed volumes are mounted READ-ONLY from the main stack: they total roughly
+# 30GB and must never be duplicated per member. A new member therefore starts in
+# seconds rather than syncing a feed.
+name: obaits-gvm-pool-1
+
+services:
+  redis-pool-1:
+    # Private to this member. redis_socket_vol in the main stack is a unix
+    # socket and cannot be shared between two ospd instances.
+    image: registry.community.greenbone.net/community/redis-server@sha256:6da6a7c7221aa3ab231961fd6ca001d552b6a2c7727ac6201c6d8a360baa963a
+    restart: always
+    volumes:
+      - redis_socket_pool_1:/run/redis/
+    networks:
+      - gvm-pool
+
+  openvasd-pool-1:
+    image: registry.community.greenbone.net/community/openvas-scanner:stable
+    restart: always
+    environment:
+      OPENVASD_MODE: service_notus
+      GNUPGHOME: /etc/openvas/gnupg
+      LISTENING: 0.0.0.0:80
+    volumes:
+      - greenbone-community-edition_openvas_data_vol:/etc/openvas:ro
+      - greenbone-community-edition_gpg_data_vol:/etc/openvas/gnupg:ro
+      - greenbone-community-edition_notus_data_vol:/var/lib/notus:ro
+      - openvas_log_pool_1:/var/log/openvas
+    networks:
+      - gvm-pool
+
+  # REAL BUG FOUND 2026-08-25: without this, openvas cannot open its log file
+  # (the member's log volume starts empty and root-owned, and openvas runs as
+  # uid 1001). When logging init fails, `openvas -s` omits db_address entirely
+  # -- and ospd-openvas has NO flag to set the Redis path, so it must discover
+  # it that way. The result was ospd crash-looping on "'NoneType' object has no
+  # attribute 'startswith'". The main stack avoids this because its
+  # configure-openvas service pre-creates the log file with mode 666.
+  configure-pool-1:
+    image: registry.community.greenbone.net/community/openvas-scanner:stable
+    volumes:
+      - openvas_log_pool_1:/var/log/openvas
+    command:
+      - /bin/sh
+      - -c
+      - |
+        touch /var/log/openvas/openvas.log
+        chmod 666 /var/log/openvas/openvas.log
+    networks:
+      - gvm-pool
+
+  # WHY THIS MEMBER ALWAYS RELAYS, AND WHY THAT IS ACCEPTED.
+  # Investigated and closed 2026-08-31. Do not re-open without new information.
+  #
+  # No peer ever establishes a DIRECT connection; everything goes through DERP.
+  # The cause is confirmed, not suspected: netcheck from INSIDE this container
+  # reports
+  #
+  #     IPv4: 172.20.0.10:34438        (the Docker bridge, not a public address)
+  #     MappingVariesByDestIP: true
+  #
+  # while the same check on the HOST reports false. Docker's bridge NAT is
+  # address-dependent -- it allocates a different external mapping per
+  # destination -- so the address STUN discovers is not the address traffic
+  # arrives from, and hole punching cannot work.
+  #
+  # THE OBVIOUS FIX IS THE WRONG ONE. network_mode: host would give the sidecar
+  # the host's endpoint-independent NAT and direct connections would work. It
+  # would also destroy the isolation this entire design exists for: ospd shares
+  # THIS container's network namespace precisely so it inherits exactly ONE
+  # tenant's route. On the host network it would see every tenant's routes, and
+  # scanning the wrong customer's devices becomes possible. That trade is not
+  # worth making for latency.
+  #
+  # AND IT WOULD NOT HELP ANYWAY. The relay is 2.2ms from this container. The
+  # 2.5-hour scan is not caused by relaying -- it is caused by the VPS being in
+  # Kansas City while the devices are in Cameroon, roughly 245ms away. A direct
+  # path between those two points is still 245ms. Hole punching does not move
+  # continents.
+  #
+  # The real remedy is the production migration to hosting nearer the market,
+  # which is a commercial decision rather than an engineering one.
+  #
+  # Tailscale sidecar. The pool member joins ONE tenant's Headscale network
+  # through this, for the duration of one scan, and leaves afterwards.
+  #
+  # ospd shares this container's network namespace (network_mode below), so it
+  # inherits the tenant route without the scanner image being modified at all.
+  # That also means gvmd reaches ospd at THIS container's address, which is why
+  # the hostname here -- not on ospd -- must match the certificate CN.
+  #
+  # Joined at scan time by the platform, not at container start: the key and
+  # login server are per-tenant and only known once a scan is allocated.
+  tailscale-pool-1:
+    image: tailscale/tailscale:stable
+    hostname: gvm-scanner-pool-1      # MUST match the CN in server.crt
+    # Readiness, not connectivity. This member idles UNAUTHENTICATED by design
+    # until a scan allocates it to a tenant, so a check requiring a tailnet
+    # address would fail permanently at rest and ospd would never start.
+    #
+    # What ospd actually needs is that tailscaled is up and its network
+    # namespace EXISTS -- which is exactly what was missing when ospd attached
+    # to a dead namespace after a restart. `tailscale status` answering at all
+    # proves the daemon is alive and the socket is served, whether or not the
+    # member is currently joined to anything.
+    healthcheck:
+      test: ["CMD-SHELL", "tailscale --socket=/var/run/tailscale/tailscaled.sock status >/dev/null 2>&1 || tailscale --socket=/var/run/tailscale/tailscaled.sock status 2>&1 | grep -q 'Logged out'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    # REAL BUG FOUND 2026-08-25: the image's own boot wrapper runs 'tailscale up'
+    # at every start and exits if it fails. That fights this design entirely --
+    # the member must idle UNAUTHENTICATED until a scan allocates it to a
+    # tenant, then join that tenant, then leave. With the wrapper, any stored
+    # state from a previous join made the next boot fail and crash-loop the
+    # container.
+    #
+    # Running tailscaled directly instead: it starts, idles, and waits for the
+    # platform to issue 'tailscale up' with the allocated tenant's credentials.
+    # ENTRYPOINT, not command: the image's entrypoint is containerboot, and a
+    # compose 'command' only replaces CMD. containerboot kept running its own
+    # 'tailscale up' at every start, which conflicted with stored state from a
+    # previous tenant and killed the container -- confirmed from its own logs
+    # ("boot: Running 'tailscale up'" followed by SIGTERM to tailscaled).
+    entrypoint:
+      - tailscaled
+      - --state=/var/lib/tailscale/tailscaled.state
+      - --socket=/var/run/tailscale/tailscaled.sock
+      - --tun=tailscale0
+    volumes:
+      - tailscale_state_pool_1:/var/lib/tailscale
+    networks:
+      - gvm-pool
+    restart: always
+
+  ospd-pool-1:
+    image: registry.community.greenbone.net/community/ospd-openvas:stable
+    restart: always
+    # No hostname and no networks here: this container shares the sidecar's
+    # network namespace entirely, so both are set on tailscale-pool-1 instead.
+    # A container in another's netns cannot also hold its own bridge membership.
+    network_mode: service:tailscale-pool-1
+    # REAL BUG FOUND 2026-08-25: NET_ADMIN and NET_RAW alone are not enough.
+    # The image's entrypoint runs setcap on /usr/local/sbin/openvas at start,
+    # and setting FILE capabilities needs CAP_SETFCAP. Without it the setcap
+    # silently fails, openvas will not execute ("Operation not permitted"), and
+    # ospd-openvas -- which learns its Redis address by running `openvas -s` --
+    # gets None and crashes with "'NoneType' object has no attribute
+    # 'startswith'". The main stack works only because it runs with Docker's
+    # default capability set, which includes SETFCAP.
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SETFCAP
+    volumes:
+      - greenbone-community-edition_vt_data_vol:/var/lib/openvas/plugins:ro
+      - greenbone-community-edition_notus_data_vol:/var/lib/notus:ro
+      - greenbone-community-edition_openvas_data_vol:/etc/openvas:ro
+      - greenbone-community-edition_gpg_data_vol:/etc/openvas/gnupg:ro
+      - redis_socket_pool_1:/run/redis
+      - openvas_log_pool_1:/var/log/openvas
+      - /etc/obaits/gvm-ca/scanners/pool-1:/certs:ro
+    command:
+      - ospd-openvas
+      - -f
+      - --port=9391
+      - --bind-address=0.0.0.0
+      - --cert-file=/certs/server.crt
+      - --key-file=/certs/server.key
+      - --ca-file=/certs/ca.crt
+      - --notus-feed-dir=/var/lib/notus/advisories
+      - --log-level=INFO
+    # REAL BUG FOUND 2026-08-26: a plain depends_on list waits for containers to
+    # START, not to be READY. After a VPS restart ospd attached to the sidecar's
+    # network namespace before tailscaled had created it, and then ran happily
+    # against a dead namespace -- container up, verify_scanner returning 200,
+    # and an EMPTY routing table reaching nothing at all. It sat like that for
+    # eight minutes before anyone noticed.
+    #
+    # service_healthy makes ospd wait for the sidecar's healthcheck instead.
+    depends_on:
+      redis-pool-1:
+        condition: service_started
+      openvasd-pool-1:
+        condition: service_started
+      configure-pool-1:
+        condition: service_completed_successfully
+      tailscale-pool-1:
+        condition: service_healthy
+
+volumes:
+  tailscale_state_pool_1:
+  redis_socket_pool_1:
+  openvas_log_pool_1:
+  greenbone-community-edition_vt_data_vol:
+    external: true
+  greenbone-community-edition_notus_data_vol:
+    external: true
+  greenbone-community-edition_openvas_data_vol:
+    external: true
+  greenbone-community-edition_gpg_data_vol:
+    external: true
+
+networks:
+  gvm-pool:
+    name: greenbone-community-edition_default
+    external: true

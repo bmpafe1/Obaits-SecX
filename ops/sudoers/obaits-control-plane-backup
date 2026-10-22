@@ -1,0 +1,23 @@
+# REAL FEATURE 2026-08-25: the platform's own backup. Obaits sold backup as a
+# product while backing up nothing of its own -- losing this host would have
+# lost every tenant's device inventory, monitoring history, incident cases and
+# identity records, with no copy anywhere.
+#
+# The script needs root to reach the docker sockets for each database container
+# and to write under /var/backups.
+#
+# Granted to ADMINISTRATOR, not www-data: this runs from the scheduler
+# (artisan schedule:run in administrator's crontab), never from a web request.
+#
+# Invoked via env(1) rather than sudo -E. Preserving the whole environment
+# needs a SETENV tag, which grants strictly more than we need; env sets exactly
+# DB_PASSWORD for the orchestrator dump and nothing else. Every other password
+# is read from its own container's environment.
+#
+# REAL BUG 2026-08-25: the first version of this rule granted bash directly and
+# the command used sudo -E, which failed with "sorry, you are not allowed to
+# preserve the environment" -- the comment claimed -E was required and the rule
+# never authorised it.
+#
+# Scoped to the one script by absolute path.
+administrator ALL=(root) NOPASSWD: /usr/bin/env DB_PASSWORD=* /bin/bash /var/www/obaits/ops/backup/control-plane-backup.sh

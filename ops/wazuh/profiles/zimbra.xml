@@ -1,0 +1,54 @@
+<agent_config>
+  <syscheck>
+    <directories>/opt/zimbra</directories>
+    <directories>/opt/zimbra/store</directories>
+    <directories>/opt/zimbra/index</directories>
+    <directories>/opt/zimbra/backup</directories>
+    <directories>/opt/zimbra/conf</directories>
+    <directories>/opt/zimbra/log</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.pid$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/opt/zimbra/log/mailbox.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/opt/zimbra/log/audit.log</location>
+  </localfile>
+  <!-- Fixed from apache to syslog, same reasoning as the nginx/apache
+       profiles in this same batch. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/opt/zimbra/log/nginx.access.log</location>
+  </localfile>
+  <!-- REAL BUG FIXED, found on a real device: nginx.error.log does not
+       exist on this real Zimbra install (confirmed directly); the
+       real, actual combined nginx log file is named nginx.log. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/opt/zimbra/log/nginx.log</location>
+  </localfile>
+  <!-- REAL BUG FIXED, found on a real device: /var/log/maillog is a
+       RHEL/CentOS naming convention; this is a real Ubuntu 22.04
+       install (confirmed directly), whose actual, real mail log is
+       /var/log/mail.log, matching the same RHEL-vs-Debian naming
+       lesson already learned for other roles this stage. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/mail.log</location>
+  </localfile>
+  <!-- REAL FINDING: amavis.log does not exist on this real device at
+       all (only PID files); confirmed directly that real Amavis
+       activity already flows through /var/log/mail.log via syslog
+       (e.g. "postfix/amavisd/smtpd[...]: connect from..."), making a
+       separate amavis.log entry both wrong and unnecessary. Entry
+       removed rather than pointed at a non-existent file. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/opt/zimbra/log/zmmailboxd.out</location>
+  </localfile>
+</agent_config>

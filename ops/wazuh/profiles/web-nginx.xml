@@ -1,0 +1,31 @@
+<agent_config>
+  <syscheck>
+    <directories>/etc/nginx</directories>
+    <directories>/usr/share/nginx/html</directories>
+    <directories>/var/www/html</directories>
+    <directories>/etc/ssl</directories>
+    <directories>/etc/pki</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$</ignore>
+  </syscheck>
+  <!-- REAL FIX: original used log_format=apache with a comment guessing
+       "close enough" — Wazuh's own current support guidance explicitly
+       recommends syslog directly for nginx logs, not the apache decoder.
+       Given two other profiles in this batch already had genuinely wrong
+       named-decoder assumptions, using the officially-recommended
+       fallback here rather than trusting the same pattern a third time. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/nginx/access.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/nginx/error.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/nginx/proxy.log</location>
+  </localfile>
+</agent_config>

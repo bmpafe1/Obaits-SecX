@@ -1,0 +1,13 @@
+# REAL FEATURE 2026-08-21: automated CCTV (lightNVR) provisioning.
+# REAL BUGS FOUND during automated testing:
+#   1. mkdir alone creates a root-owned dir www-data can't write into
+#      -- added chown.
+#   2. Writing the real nginx config itself was never actually covered
+#      by any sudo rule at all (file_put_contents is plain PHP file
+#      I/O, not a shell command) -- added a NARROW, single-target tee
+#      rule for exactly this one real file, not a wildcard.
+www-data ALL=(ALL) NOPASSWD: /bin/mkdir -p /opt/lightnvr-*
+www-data ALL=(ALL) NOPASSWD: /bin/chown www-data\:www-data /opt/lightnvr-*
+www-data ALL=(ALL) NOPASSWD: /usr/sbin/nginx -t
+www-data ALL=(ALL) NOPASSWD: /bin/systemctl reload nginx
+www-data ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/nginx/sites-available/obaits-platform

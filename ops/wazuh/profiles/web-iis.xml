@@ -1,0 +1,28 @@
+<agent_config>
+  <syscheck>
+    <directories>C:\inetpub</directories>
+    <directories>C:\Windows\System32\inetsrv\config</directories>
+    <directories>C:\inetpub\wwwroot</directories>
+    <directories>C:\inetpub\logs\LogFiles</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Windows-IIS-Configuration/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Windows-IIS-W3SVC/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\inetpub\logs\LogFiles\W3SVC*\*.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Windows\System32\LogFiles\HTTPERR\*.log</location>
+  </localfile>
+</agent_config>

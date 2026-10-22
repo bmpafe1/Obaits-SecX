@@ -1,0 +1,37 @@
+<group name="zimbra,">
+  <rule id="100305" level="3">
+    <decoded_as>zimbra-audit</decoded_as>
+    <description>Zimbra: audit event ($(audit_cmd)) for $(audit_account)</description>
+    <group>zimbra,</group>
+  </rule>
+  <!-- REAL BUG FOUND via wazuh-logtest: rule 100306 never actually won
+       in practice, even after a level bump. Traced to the real, actual
+       cause: the built-in stock rule 2501 ("syslog: User authentication
+       failure", confirmed directly in 0020-syslog_rules.xml) matches
+       purely on raw <match> text patterns, completely independent of any
+       decoder; it isn't a level tie-break at all, it's a genuinely
+       separate, independent top-level rule that also happens to match
+       Zimbra's own failure-message wording. Wazuh's real, documented
+       mechanism for exactly this ("make a generic stock rule alert more
+       specific") is to make our own rule a CHILD of the actual competing
+       rule via if_sid, not just bump our own independent rule's level.
+       The audit_error field (only ever populated by our own zimbra-audit
+       decoder) keeps this correctly scoped to genuine Zimbra events. -->
+  <rule id="100306" level="6">
+    <if_sid>2501</if_sid>
+    <field name="audit_error">.+</field>
+    <description>Zimbra: authentication failure for $(audit_account) - $(audit_error)</description>
+    <group>zimbra,authentication_failed,gdpr_IV_35.7.d,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+  <rule id="100307" level="3">
+    <if_sid>100305</if_sid>
+    <!-- REAL SYNTAX CAUGHT before deploying: "!" inside a field's own
+         pattern text is NOT valid Wazuh negation syntax, confirmed
+         directly via Wazuh's own community documentation. The real,
+         correct form is the negate="yes" XML ATTRIBUTE on the field
+         tag itself. -->
+    <field name="audit_error" negate="yes">.+</field>
+    <description>Zimbra: successful $(audit_cmd) for $(audit_account)</description>
+    <group>zimbra,authentication_success,</group>
+  </rule>
+</group>

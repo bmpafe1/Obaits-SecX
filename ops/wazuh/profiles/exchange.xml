@@ -1,0 +1,45 @@
+<agent_config>
+  <syscheck>
+    <directories>C:\Program Files\Microsoft\Exchange Server</directories>
+    <directories>C:\Program Files\Microsoft\Exchange Server\V15\Mailbox</directories>
+    <directories>C:\Program Files\Microsoft\Exchange Server\V15\TransportRoles</directories>
+    <directories>C:\Program Files\Microsoft\Exchange Server\V15\Bin</directories>
+    <directories>C:\inetpub\wwwroot</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.edb$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Exchange-Management/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Exchange-PowerShell/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Microsoft-Exchange-Transport/Operational</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft\Exchange Server\V15\Logging\OWA\*.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft\Exchange Server\V15\Logging\ECP\*.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft\Exchange Server\V15\Logging\EAS\*.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft\Exchange Server\V15\TransportRoles\Logs\ProtocolLog\SmtpReceive\*.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft\Exchange Server\V15\TransportRoles\Logs\ProtocolLog\SmtpSend\*.log</location>
+  </localfile>
+</agent_config>

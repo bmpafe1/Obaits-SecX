@@ -1,0 +1,46 @@
+<agent_config>
+  <syscheck>
+    <directories>/etc,/usr/bin,/usr/sbin</directories>
+    <directories>/bin,/sbin,/boot</directories>
+    <directories>/root,/home</directories>
+    <directories>/etc/cron.d,/etc/cron.daily,/etc/cron.hourly</directories>
+    <directories>/etc/cron.monthly,/etc/cron.weekly,/var/spool/cron</directories>
+    <directories>/etc/ssh,/etc/pam.d</directories>
+    <directories>/etc/systemd/system,/lib/systemd/system</directories>
+    <directories>/etc/iptables,/etc/nftables,/etc/firewalld</directories>
+    <ignore type="sregex">\.log$|\.tmp$|\.swp$|\.cache$</ignore>
+    <frequency>43200</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <nodiff>/etc/ssh/ssh_host_*_key</nodiff>
+    <nodiff>/root/.ssh/id_rsa</nodiff>
+  </syscheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/secure</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/messages</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/sudo.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/cron.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/audit/audit.log</location>
+  </localfile>
+</agent_config>

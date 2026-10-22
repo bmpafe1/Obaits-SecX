@@ -1,0 +1,15 @@
+# Lets the deploy script restart the queue worker without prompting.
+#
+# WHY IT MATTERS: a running worker holds the OLD code in memory and git pull
+# does not affect it, so any change to a queued job is invisible until the
+# worker recycles. That cost hours of debugging on 2026-08-25 when a fixed
+# RunScan kept failing with the pre-fix error.
+#
+# Restarting it is therefore a mandatory deploy step -- and a deploy that stops
+# to ask for a password is a deploy that hangs when run unattended.
+#
+# Granted to ADMINISTRATOR, the user that owns the deploy directory and runs the
+# scheduler. Scoped to this ONE unit: not systemctl generally, and not any other
+# service.
+administrator ALL=(root) NOPASSWD: /usr/bin/systemctl restart obaits-queue
+administrator ALL=(root) NOPASSWD: /bin/systemctl restart obaits-queue

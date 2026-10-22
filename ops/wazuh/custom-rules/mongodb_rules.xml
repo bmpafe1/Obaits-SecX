@@ -1,0 +1,28 @@
+<group name="mongodb,">
+  <!-- REAL CONCERN CAUGHT before deploying: decoded_as="json" is
+       Wazuh's own GENERIC, built-in decoder, used for ANY JSON-
+       formatted log project-wide, not something MongoDB-specific at
+       all. Scoping on the real, unique log location instead of the
+       decoder name alone avoids any risk of this rule cross-matching
+       an unrelated future JSON source that happens to share a field
+       named "c" with value "ACCESS". -->
+  <rule id="100308" level="3">
+    <decoded_as>json</decoded_as>
+    <location>mongod.log</location>
+    <field name="c">ACCESS</field>
+    <description>MongoDB: access event ($(msg))</description>
+    <group>mongodb,</group>
+  </rule>
+  <rule id="100309" level="6">
+    <if_sid>100308</if_sid>
+    <field name="msg">Failed to authenticate</field>
+    <description>MongoDB: authentication failure for user $(attr.user) on db $(attr.db) from $(attr.client)</description>
+    <group>mongodb,authentication_failed,gdpr_IV_35.7.d,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+  <rule id="100310" level="3">
+    <if_sid>100308</if_sid>
+    <field name="msg">Successfully authenticated</field>
+    <description>MongoDB: successful authentication for user $(attr.user) on db $(attr.db) from $(attr.client)</description>
+    <group>mongodb,authentication_success,</group>
+  </rule>
+</group>

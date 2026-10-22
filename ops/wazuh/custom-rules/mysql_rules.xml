@@ -1,0 +1,25 @@
+<group name="mysql,">
+  <rule id="100311" level="3">
+    <decoded_as>mysql-audit</decoded_as>
+    <description>MySQL/MariaDB: audit event ($(audit_command)) on $(audit_db) by $(audit_user)</description>
+    <group>mysql,</group>
+  </rule>
+  <rule id="100312" level="7">
+    <if_sid>100311</if_sid>
+    <field name="audit_command">CREATE|DROP|ALTER</field>
+    <description>MySQL/MariaDB: schema change ($(audit_command)) on $(audit_db).$(audit_detail) by $(audit_user)</description>
+    <group>mysql,gdpr_IV_35.7.d,pci_dss_10.2.7,</group>
+  </rule>
+  <rule id="100313" level="5">
+    <if_sid>100311</if_sid>
+    <field name="audit_command">WRITE</field>
+    <description>MySQL/MariaDB: data write on $(audit_db).$(audit_detail) by $(audit_user)</description>
+    <group>mysql,gdpr_IV_35.7.d,</group>
+  </rule>
+  <rule id="100314" level="3">
+    <if_sid>100311</if_sid>
+    <field name="audit_command">CONNECT|DISCONNECT</field>
+    <description>MySQL/MariaDB: $(audit_command) by $(audit_user) from $(audit_source)</description>
+    <group>mysql,</group>
+  </rule>
+</group>

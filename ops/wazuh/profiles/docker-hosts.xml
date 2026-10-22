@@ -1,0 +1,60 @@
+<agent_config>
+  <syscheck>
+    <directories>/usr/bin/docker</directories>
+    <directories>/etc/docker</directories>
+    <directories>/var/lib/docker</directories>
+    <directories>/var/run/docker.sock</directories>
+    <directories>/opt/docker</directories>
+    <directories>/home/*/docker-compose</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.pid$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+  <!-- REAL BUG FIXED: original pointed log_format=syslog at /var/log/journal
+       — journald is a binary structure, not a flat text file; this would
+       never have produced readable log lines. Uses Wazuh's actual
+       dedicated journald mechanism instead (log_format AND location both
+       "journald"), already proven working in this project's own manager
+       config since Stage 1. -->
+  <localfile>
+    <log_format>journald</log_format>
+    <location>journald</location>
+  </localfile>
+  <!-- REAL BUG FIXED, found on a real device (brian-Laptop, real running
+       containers): Docker's json-file logging driver (confirmed via
+       docker info/docker inspect; this is the real, active driver,
+       not journald as the earlier fix assumed might be needed instead)
+       wraps every log line in its own genuine JSON envelope
+       ({"log":"...","stream":"stdout","time":"..."}), confirmed directly
+       via a real container's actual log file. The original entry used
+       log_format=syslog, which would have left this real JSON content
+       as one raw, undecoded blob; switched to json, matching Wazuh's
+       own native decoder, same as already proven for MongoDB. -->
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/lib/docker/containers/*/*.log</location>
+  </localfile>
+  <!-- REAL FIX, replacing the earlier known, documented limitation: a
+       naive "docker events, since flag = 1h" run every hour re-reported the
+       prior hour's already-seen events on every overlap. The real
+       docker-hosts.sh setup script now deploys a real, stateful wrapper
+       (a root-owned cron job every 5 minutes, tracking the last real
+       event's own timestamp between runs) that writes genuine, non-
+       duplicate JSON event lines to this real, dedicated log file;
+       read here as a normal localfile, using Wazuh's native json
+       decoder, same as already proven for MongoDB and Docker's own
+       container logs above. REAL, DELIBERATE SECURITY CHOICE: the
+       wazuh agent itself never touches Docker's own socket/API at all;
+       adding it to the "docker" group would be effectively root-
+       equivalent, a genuinely bigger privilege than any database log-
+       file group grant already made for other roles. -->
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/obaits-docker-events.log</location>
+  </localfile>
+</agent_config>

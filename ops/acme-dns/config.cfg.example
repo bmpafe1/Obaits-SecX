@@ -1,0 +1,34 @@
+# REAL FEATURE 2026-08-22, added during a real portability audit: this
+# is a real, redacted template of /opt/acme-dns/config/config.cfg on
+# the live VPS -- the real, live file also contains a real Postgres
+# password inline in the connection string, which is NOT reproduced
+# here. Replace CHANGEME_REAL_PASSWORD and the IP/domain below with
+# real, environment-specific values on any new deployment.
+
+[general]
+listen = "0.0.0.0:53"
+protocol = "both"
+domain = "acme.obaits.com"
+nsname = "acme.obaits.com"
+nsadmin = "admin.obaits.com"
+records = [
+    "acme.obaits.com. A 38.247.149.204",
+    "acme.obaits.com. NS acme.obaits.com.",
+]
+debug = false
+[database]
+engine = "postgres"
+connection = "postgres://acmedns:CHANGEME_REAL_PASSWORD@acme-dns-db/acmedns_db?sslmode=disable"
+[api]
+ip = "0.0.0.0"
+disable_registration = false
+port = "8095"
+tls = "none"
+notification_email = ""
+corsorigins = ["*"]
+use_header = false
+header_name = "X-Forwarded-For"
+[logconfig]
+loglevel = "info"
+logtype = "stdout"
+logformat = "text"

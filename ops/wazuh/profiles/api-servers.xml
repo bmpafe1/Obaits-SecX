@@ -1,0 +1,31 @@
+<agent_config>
+  <syscheck>
+    <directories>/opt/api</directories>
+    <directories>/srv/api</directories>
+    <directories>/var/www/api</directories>
+    <directories>/etc/api</directories>
+    <directories>/var/log/api</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$</ignore>
+  </syscheck>
+  <!-- Fixed from apache to syslog, same reasoning as the other web-facing
+       profiles in this batch. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/nginx/api_access.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/httpd/api_access.log</location>
+  </localfile>
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/api/audit.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/api/error.log</location>
+  </localfile>
+</agent_config>

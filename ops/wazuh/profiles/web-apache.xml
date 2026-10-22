@@ -1,0 +1,41 @@
+<agent_config>
+  <syscheck>
+    <directories>/etc/httpd</directories>
+    <directories>/etc/apache2</directories>
+    <directories>/var/www/html</directories>
+    <directories>/usr/share/httpd</directories>
+    <directories>/var/www/vhosts</directories>
+    <directories>/etc/ssl</directories>
+    <directories>/etc/pki</directories>
+    <directories>/etc/httpd/modules</directories>
+    <directories>/usr/lib64/httpd/modules</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$|\.swp$</ignore>
+  </syscheck>
+  <!-- Using syslog rather than the dedicated 'apache' decoder — matches
+       Wazuh's own current support-team guidance (found directly, same
+       recommendation given for genuine Apache logs), consistent with the
+       nginx profile's identical fix in this same batch. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/httpd/access_log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/apache2/access.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/httpd/error_log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/apache2/error.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/httpd/ssl_error_log</location>
+  </localfile>
+</agent_config>

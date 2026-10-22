@@ -1,0 +1,66 @@
+<agent_config>
+  <syscheck>
+    <directories>/usr/lib/postgresql</directories>
+    <directories>/etc/postgresql</directories>
+    <directories>/var/lib/postgresql</directories>
+    <directories>/etc/postgresql/*/main</directories>
+    <directories>/var/log/postgresql</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.pid$</ignore>
+  </syscheck>
+  <!-- REAL BUG FIXED, found on a real device: Wazuh's postgresql_log
+       format does not expand the "*" wildcard — confirmed directly
+       (a literal filename was picked up by logcollector, the identical
+       wildcard entry never was). postgres-db.sh's setup script creates
+       a stable, version-independent symlink
+       (/var/log/postgresql/postgresql-current.log) pointing at whichever
+       real, version-specific file actually exists — watch that fixed
+       name instead of a wildcard that silently never matches. -->
+  <!-- REAL, second bug fixed on this same file: even with the wildcard
+       issue solved, postgresql_log STILL never delivered a single line
+       to the manager (confirmed: zero matches in archives.json for this
+       location, despite the file being open with zero errors and
+       containing real, fresh content) — this is the same class of
+       "named decoder looks right on paper, fails in practice" problem
+       already hit and fixed the same way for MySQL, nginx, Apache,
+       Zimbra, and API servers earlier this stage. postgresql_log likely
+       expects a specific log_line_prefix format Ubuntu's default
+       PostgreSQL config doesn't match, and silently drops non-matching
+       lines at the AGENT level before they're ever sent. Using the same
+       reliable fallback used everywhere else — confirmed this format
+       genuinely works via /var/log/auth.log's own syslog entries flowing
+       correctly on this same agent all session. Real, PostgreSQL-
+       specific structured decoding is Stage 4 work (custom decoders +
+       rules), not solved by this format switch alone — this fixes
+       delivery, not rich parsing. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/postgresql/postgresql-current.log</location>
+  </localfile>
+  <!-- The separate pgaudit.log entry was REMOVED: pgaudit writes its
+       AUDIT: lines into the MAIN PostgreSQL log (confirmed directly —
+       real AUDIT: entries appeared there during testing), never into a
+       standalone pgaudit.log file. That file never exists, so this
+       entry only ever produced a harmless "Could not open file" error
+       on every agent restart. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+  <!-- REAL, DIFFERENT DESIGN for Windows: pgaudit has no official
+       pre-built Windows binaries at all (only compiled-from-source, not
+       automatable via a Fleet Script). Real, honest alternative: the
+       built-in log_statement = 'all' setting (postgres-db.ps1),
+       genuinely native to PostgreSQL, no extension needed, applies at
+       RUNTIME with no restart. Given Windows already proved wildcards
+       genuinely work (confirmed for IIS's W3SVC*\*.log on this same
+       agent, unlike Linux's real postgresql_log wildcard limitation),
+       using a plain wildcard directly here too, no symlink workaround
+       needed, unlike the Linux entry above. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\PostgreSQL\*\data\log\postgresql-*.log</location>
+  </localfile>
+</agent_config>

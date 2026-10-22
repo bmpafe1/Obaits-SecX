@@ -1,0 +1,47 @@
+<agent_config>
+  <syscheck>
+    <directories>/usr/bin/mysql</directories>
+    <directories>/etc/mysql</directories>
+    <directories>/var/lib/mysql</directories>
+    <directories>/var/log/mysql</directories>
+    <directories>/etc/mysql/conf.d</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.pid$|\.err$</ignore>
+  </syscheck>
+  <!-- REAL BUG FIXED, found on a real device: /var/log/mysql/ does not
+       exist at all on a stock Ubuntu MariaDB install — this database logs
+       to journald by default (already covered by Tier 1's own journald
+       monitoring, confirmed delivering real content with zero MySQL-
+       specific work). The original file-path entries here pointed at
+       files that never existed on this install. Replaced with the REAL,
+       dedicated audit log mysql-db.sh's setup script actually creates —
+       genuine query-level auditing (CONNECT, QUERY, TABLE events) via the
+       MariaDB Audit Plugin, installed and configured fully automatically,
+       matching the same standard already proven for PostgreSQL/pgaudit.
+       Using syslog format — the reliable fallback proven across this
+       whole stage (Wazuh's own open GitHub issue #12553 confirms neither
+       mysql nor mysql_log formats reliably decode MySQL content). -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/mysql/server_audit.log</location>
+  </localfile>
+  <!-- REAL GAP FOUND: this profile only ever had the Linux path, the
+       Windows agent (confirmed on WinClient, MariaDB 12.3) never even
+       attempted to open the real Windows audit log, since it doesn't
+       exist at that path on Windows at all. Real Windows path confirmed
+       directly via mysql-db.ps1's own successful setup: the data
+       directory (and therefore the audit log alongside it) varies by
+       install, so this uses the SAME wildcard convention already proven
+       working for IIS's W3SVC*\*.log on this same Windows agent,
+       unlike Postgres's wildcard limitation on Linux, Windows genuinely
+       expands this correctly (confirmed: "New file that matches the
+       pattern" logged during IIS testing). A harmless "file not found"
+       on Linux agents for this path, and vice versa for the Linux path
+       on Windows agents, is expected and does not indicate a problem. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\MariaDB *\data\server_audit.log</location>
+  </localfile>
+</agent_config>

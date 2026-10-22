@@ -1,0 +1,8 @@
+<decoder name="zimbra-audit">
+  <prematch>security - cmd=</prematch>
+</decoder>
+<decoder name="zimbra-audit-fields">
+  <parent>zimbra-audit</parent>
+  <regex type="pcre2" offset="after_parent">^([^;]+); account=([^;]+); protocol=([^;]+);(?: error=(.+);)?</regex>
+  <order>audit_cmd, audit_account, audit_protocol, audit_error</order>
+</decoder>

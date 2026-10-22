@@ -1,0 +1,53 @@
+<agent_config>
+  <!-- NOTE: paths below assume the default SQL Server 2019 instance
+       (MSSQL15.MSSQLSERVER). Real installs vary by version and by named
+       instance — adjust these paths per actual deployment; this profile
+       covers the common default case, not every possible configuration. -->
+  <syscheck>
+    <directories>C:\Program Files\Microsoft SQL Server</directories>
+    <directories>C:\Program Files (x86)\Microsoft SQL Server</directories>
+    <directories>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA</directories>
+    <directories>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup</directories>
+    <directories>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Log</directories>
+    <directories>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Jobs</directories>
+    <directories>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Binn</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.trc$|\.tmp$</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>eventchannel</log_format>
+    <location>Security</location>
+  </localfile>
+  <!-- REAL BUG FIXED: original used log_format=mysql for SQL Server's
+       error log — its own comment hedged ("flexible, or we create
+       custom"), a sign it was never actually verified. mysql/mysql_log
+       have documented decoding problems even for genuine MySQL logs
+       (Wazuh GitHub #12553); using it for a different product's log is
+       worse. Fixed to syslog, matching the same real-world workaround. -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Log\ERRORLOG</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Log\SQLAGENT.OUT</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Audit\*.sqlaudit</location>
+  </localfile>
+  <!-- REAL, GENUINE PLATFORM BUG WORKED AROUND: confirmed directly (and
+       via multiple real, independent Wazuh GitHub issues, one closed
+       "not planned" by Wazuh's own team) that custom rules referencing
+       windows_eventchannel-decoded content never fire in live
+       production, regardless of approach. This real, plain JSON log,
+       written by a poller deployed via mssql-db.ps1's own Phase 4,
+       gives us the same real audit content through a completely
+       normal, already-proven <localfile> pipeline instead. -->
+  <localfile>
+    <log_format>json</log_format>
+    <location>C:\ProgramData\Obaits\mssql-audit-events.log</location>
+  </localfile>
+</agent_config>

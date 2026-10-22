@@ -1,0 +1,24 @@
+<agent_config>
+  <syscheck>
+    <directories>/etc/mongod.conf</directories>
+    <directories>/var/lib/mongodb</directories>
+    <directories>/usr/bin/mongod</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.lock$</ignore>
+  </syscheck>
+  <!-- MongoDB Community Edition has NO native audit logging at all —
+       confirmed directly (Enterprise/Atlas-only). Real, honest
+       alternative used instead: MongoDB's own built-in slow-query
+       profiler, configured (by mongodb.sh's setup script) with
+       slowms: -1 to log genuinely every operation, not just naturally-
+       slow ones — a real, documented MongoDB mechanism, not a
+       workaround. Confirmed directly on a real device: this captures
+       full command detail (insert documents, find filters, remote
+       IP/port, duration) as genuine structured JSON, natively. -->
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/mongodb/mongod.log</location>
+  </localfile>
+</agent_config>

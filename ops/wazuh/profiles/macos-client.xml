@@ -1,0 +1,50 @@
+<agent_config>
+  <syscheck>
+    <directories>/Users</directories>
+    <directories>/Library/LaunchAgents</directories>
+    <directories>/Library/LaunchDaemons</directories>
+    <directories>/System/Library/LaunchDaemons</directories>
+    <directories>/Users/*/Library/LaunchAgents</directories>
+    <directories>/Users/*/Library/Application Support</directories>
+    <directories>/Library/Extensions</directories>
+    <directories>/System/Library/Extensions</directories>
+    <directories>/Users/*/.ssh</directories>
+    <directories>/Library/StartupItems</directories>
+    <directories>/etc/periodic</directories>
+    <directories>/Applications</directories>
+    <frequency>21600</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <alert_new_files>yes</alert_new_files>
+    <ignore type="sregex">\.log$|\.tmp$|\.cache$|\.db$</ignore>
+    <ignore>/Users/*/Library/Caches</ignore>
+    <ignore>/Users/*/Library/Logs</ignore>
+  </syscheck>
+  <localfile>
+    <log_format>macos</log_format>
+    <location>system</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/authd.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/install.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/appfirewall.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/pf.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/kernel.log</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/fsck.log</location>
+  </localfile>
+</agent_config>
